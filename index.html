@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SOLAR MYSTERY — Roland's Edition</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap');
+:root{--space:#030712;--deep:#0a0f1e;--panel:#0d1528;--border:#1e3a5f;--glow:#00d4ff;--warm:#ff6b35;--gold:#ffd700;--danger:#ff3366;--success:#00ff88;--text:#c8d8f0;--dim:#4a6080}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:var(--space);color:var(--text);font-family:'Exo 2',sans-serif;min-height:100vh}
+canvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0}
+#app{position:relative;z-index:1;max-width:860px;margin:0 auto;padding:16px}
+header{text-align:center;padding:24px 0 16px}
+h1{font-family:'Orbitron',monospace;font-size:clamp(1.3rem,5.5vw,2.6rem);font-weight:900;letter-spacing:4px;background:linear-gradient(135deg,var(--glow),#fff,var(--glow));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 20px var(--glow));animation:tp 3s ease-in-out infinite}
+@keyframes tp{0%,100%{filter:drop-shadow(0 0 20px var(--glow))}50%{filter:drop-shadow(0 0 40px var(--glow))}}
+header p{color:var(--dim);font-size:.78rem;letter-spacing:3px;text-transform:uppercase;margin-top:6px}
+#scorebar{display:flex;justify-content:space-between;align-items:center;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:10px 16px;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+.si{text-align:center}.sl{font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--dim)}.sv{font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:700;color:var(--gold)}
+.screen{display:none}.screen.active{display:block}
+#intro-screen{text-align:center;padding:10px 0}
+.story{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:22px;margin:16px 0;text-align:left;line-height:1.75;font-size:.95rem}
+.hi{color:var(--glow);font-weight:600}.wa{color:var(--danger);font-weight:600}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(68px,1fr));gap:8px;margin:14px 0}
+.pm{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:7px 4px;text-align:center;font-size:.62rem;color:var(--dim)}
+.pe{font-size:1.5rem;display:block;margin-bottom:3px}
+button{cursor:pointer;font-family:'Exo 2',sans-serif;border:none;outline:none}
+.btn-p{display:inline-block;background:linear-gradient(135deg,#0066aa,#0099dd);color:#fff;border-radius:14px;padding:18px 44px;font-family:'Orbitron',monospace;font-size:1rem;font-weight:700;letter-spacing:2px;box-shadow:0 0 20px rgba(0,153,221,.4);margin:10px;transition:transform .15s}
+.btn-p:active{transform:scale(.96)}
+.btn-s{display:inline-block;background:transparent;color:var(--dim);border:1px solid var(--border)!important;border-radius:12px;padding:12px 24px;font-size:.85rem;margin:6px;transition:all .2s}
+.btn-s:active{border-color:var(--glow)!important;color:var(--glow)}
+.diff-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:14px 0}
+.db{background:var(--panel);border:2px solid var(--border)!important;border-radius:10px;padding:12px 20px;color:var(--dim);font-family:'Orbitron',monospace;font-size:.68rem;letter-spacing:1px;transition:all .2s}
+.db.active{border-color:var(--glow)!important;color:var(--glow);background:rgba(0,212,255,.05)}
+.nav{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:14px 0}
+.rh{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 18px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.mt{font-family:'Orbitron',monospace;font-size:.7rem;letter-spacing:2px;color:var(--glow);text-transform:uppercase}
+.rn{font-family:'Orbitron',monospace;color:var(--gold);font-size:.8rem}
+#clue-panel{background:linear-gradient(135deg,#0a1525,#0d1f35);border:1px solid var(--border);border-left:3px solid var(--glow);border-radius:12px;padding:18px 20px;margin-bottom:18px;position:relative;overflow:hidden}
+#clue-panel::before{content:'📡 TRANSMISSION RECEIVED';position:absolute;top:7px;right:12px;font-size:.55rem;letter-spacing:2px;color:var(--glow);opacity:.6}
+#clue-text{font-size:1rem;line-height:1.75;color:#ddeeff}
+.ck{color:var(--gold);font-weight:600}
+#choices-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:18px}
+.pc{background:var(--panel);border:2px solid var(--border);border-radius:16px;padding:16px 10px;text-align:center;cursor:pointer;transition:border-color .2s,transform .15s}
+.pc:active{transform:scale(.96)}
+.pc.correct{border-color:var(--success)!important;background:#0a2018;animation:cp .5s ease}
+.pc.wrong{border-color:var(--danger)!important;background:#200a14;animation:ws .4s ease}
+@keyframes cp{0%{transform:scale(1)}50%{transform:scale(1.04)}100%{transform:scale(1)}}
+@keyframes ws{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.pe2{font-size:2.4rem;display:block;margin-bottom:7px}
+.pn{font-family:'Orbitron',monospace;font-size:.68rem;font-weight:700;letter-spacing:1px;color:var(--text);margin-bottom:4px}
+.ph{font-size:.6rem;color:var(--dim);line-height:1.3}
+#fb{background:var(--panel);border-radius:14px;padding:18px 20px;margin-bottom:14px;display:none;animation:fi .4s ease}
+@keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+#fb.cf{border:2px solid var(--success);background:linear-gradient(135deg,#091a10,#0d2015)}
+#fb.wf{border:2px solid var(--danger);background:linear-gradient(135deg,#1a0909,#200d0d)}
+.ft{font-family:'Orbitron',monospace;font-size:1rem;font-weight:700;margin-bottom:8px}
+#fb p{font-size:.88rem;line-height:1.6;color:var(--text)}
+.ftag{display:inline-block;background:rgba(0,212,255,.1);border:1px solid rgba(0,212,255,.3);border-radius:6px;padding:2px 8px;font-size:.72rem;color:var(--glow);margin:4px 2px}
+#tbw{height:6px;background:var(--border);border-radius:3px;margin-bottom:14px;overflow:hidden}
+#tb{height:100%;background:linear-gradient(90deg,var(--glow),var(--gold));border-radius:3px;transition:width 1s linear,background 1s}
+#tb.w{background:linear-gradient(90deg,var(--warm),var(--danger))}
+#end-screen{text-align:center;padding:10px 0}
+.ec{background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:32px 24px;margin:16px 0}
+.er{font-family:'Orbitron',monospace;font-size:clamp(1rem,4vw,1.8rem);font-weight:900;margin:10px 0}
+.fs{font-family:'Orbitron',monospace;font-size:clamp(2rem,10vw,4rem);font-weight:900;color:var(--gold);filter:drop-shadow(0 0 20px rgba(255,215,0,.5))}
+.rb{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:20px 0}
+.rs{background:var(--deep);border:1px solid var(--border);border-radius:12px;padding:14px}
+.rsn{font-family:'Orbitron',monospace;font-size:1.4rem;font-weight:700;color:var(--glow)}
+.rsl{font-size:.65rem;letter-spacing:1px;color:var(--dim);text-transform:uppercase;margin-top:4px}
+#dossier-screen{padding:10px 0}
+.dtabs{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:16px}
+.dtab{background:var(--panel);border:1px solid var(--border)!important;border-radius:8px;padding:8px 16px;color:var(--dim);font-size:.72rem;letter-spacing:1px;transition:all .2s}
+.dtab.active{border-color:var(--glow)!important;color:var(--glow);background:rgba(0,212,255,.05)}
+.dg{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.dc{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px}
+.de{font-size:1.8rem;margin-bottom:6px}
+.dn{font-family:'Orbitron',monospace;font-size:.75rem;font-weight:700;color:var(--glow);margin-bottom:6px}
+.df{font-size:.72rem;color:var(--dim);line-height:1.6}
+.df span{color:var(--text)}
+.cat-badge{display:inline-block;font-size:.58rem;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:4px;margin-bottom:8px;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.2);color:var(--glow)}
+#bonus-panel{display:none;background:linear-gradient(135deg,#1a1200,#2a1f00);border:2px solid var(--gold);border-radius:16px;margin-bottom:14px;animation:ba .5s ease;overflow:hidden}
+@keyframes ba{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+.bh{background:linear-gradient(135deg,#3a2800,#2a1f00);padding:10px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,215,0,.3)}
+.bt{font-family:'Orbitron',monospace;font-size:.62rem;letter-spacing:2px;color:var(--gold);text-transform:uppercase}
+.bp{font-family:'Orbitron',monospace;font-size:.78rem;color:var(--gold)}
+.bb{padding:16px 18px}
+.bc{font-size:.95rem;line-height:1.7;color:#fff8e0;margin-bottom:14px}
+.cw{background:rgba(0,0,0,.4);border:1px solid rgba(255,215,0,.2);border-radius:10px;padding:8px;margin-bottom:12px;text-align:center}
+#bonus-choices{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.bcard{background:rgba(255,215,0,.05);border:1px solid rgba(255,215,0,.25);border-radius:10px;padding:14px 12px;cursor:pointer;font-size:.88rem;color:#fff8e0;text-align:center;transition:all .2s}
+.bcard:active{border-color:var(--gold)!important;background:rgba(255,215,0,.12)}
+.bcard.correct{border-color:var(--success)!important;background:rgba(0,255,136,.1)}
+.bcard.wrong{border-color:var(--danger)!important;background:rgba(255,51,102,.1)}
+#bfb{margin-top:12px;padding:12px 14px;border-radius:8px;font-size:.85rem;line-height:1.6;display:none}
+#bfb.cf{background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.3);color:#aaffcc}
+#bfb.wf{background:rgba(255,51,102,.08);border:1px solid rgba(255,51,102,.3);color:#ffaabb}
+@media(max-width:480px){#choices-grid{grid-template-columns:repeat(2,1fr)}.rb{grid-template-columns:repeat(3,1fr)}.btn-p{padding:16px 32px;font-size:.9rem}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="app">
+<header><h1>☄️ SOLAR MYSTERY</h1><p>Roland's Edition — The Full Universe</p></header>
+<div id="scorebar">
+  <div class="si"><div class="sl">Score</div><div class="sv" id="sc">0</div></div>
+  <div class="si"><div class="sl">Streak</div><div class="sv" id="str">0🔥</div></div>
+  <div class="si"><div class="sl">Round</div><div class="sv" id="rd">—</div></div>
+  <div class="si"><div class="sl">Rank</div><div class="sv" id="rk" style="font-size:.8rem">Cadet</div></div>
+</div>
+
+<div id="intro-screen" class="screen active">
+  <div class="story">
+    <p>🚀 <span class="hi">MISSION BRIEFING — ROLAND'S EDITION</span></p><br>
+    <p>The solar system has been <span class="wa">infiltrated by impostors</span>. Planets, moons, dwarf planets, comets, asteroids, and interstellar visitors — something about each one is <em>wrong</em>.</p><br>
+    <p>Read the deep-space transmissions carefully. <span class="hi">The clues are in the details.</span> Think fast, think sharp.</p><br>
+    <p>New this edition: <span class="hi">Moons 🌙 · Dwarf Planets 🪐 · Comets ☄️ · Asteroids 🪨 · Kuiper Belt 🌌 · Interstellar Visitors 🛸</span></p><br>
+    <p>⚡ Speed bonus · 🔥 Streak multiplier · ⭐ Deep Universe bonus rounds</p>
+  </div>
+  <div class="pgrid" id="planet-preview"></div>
+  <p style="color:var(--dim);font-size:.78rem;margin-bottom:8px;letter-spacing:1px">SELECT DIFFICULTY</p>
+  <div class="diff-btns">
+    <button class="db active" id="diff-cadet" onclick="setDiff('cadet')">🌱 CADET</button>
+    <button class="db" id="diff-pilot" onclick="setDiff('pilot')">🚀 PILOT</button>
+    <button class="db" id="diff-commander" onclick="setDiff('commander')">⭐ COMMANDER</button>
+  </div>
+  <div class="nav">
+    <button class="btn-p" onclick="startGame()">LAUNCH MISSION</button>
+    <button class="btn-s" onclick="showScreen('dossier-screen')">📋 Field Guide</button>
+  </div>
+</div>
+
+<div id="game-screen" class="screen">
+  <div class="rh"><span class="mt" id="ml">MISSION 1</span><span class="rn" id="rl">Round 1 of 10</span></div>
+  <div id="tbw"><div id="tb" style="width:100%"></div></div>
+  <div id="clue-panel"><p id="clue-text"></p></div>
+  <div id="choices-grid"></div>
+  <div id="fb"></div>
+  <div id="bonus-panel">
+    <div class="bh"><span class="bt">⭐ Bonus Transmission — Deep Universe</span><span class="bp">+150 pts</span></div>
+    <div class="bb">
+      <div id="bcw" class="cw" style="display:none"></div>
+      <p class="bc" id="bct"></p>
+      <div id="bonus-choices"></div>
+      <div id="bfb"></div>
+    </div>
+  </div>
+  <div style="text-align:center;margin-top:12px">
+    <button class="btn-s" id="next-btn" style="display:none" onclick="nextRound()">NEXT TRANSMISSION →</button>
+  </div>
+</div>
+
+<div id="end-screen" class="screen">
+  <div class="ec">
+    <p style="color:var(--dim);font-size:.75rem;letter-spacing:2px;text-transform:uppercase">Mission Complete</p>
+    <div class="fs" id="fsd">0</div>
+    <div class="er" id="erd"></div>
+    <p id="em" style="color:var(--dim);font-size:.88rem;margin:10px 0 20px"></p>
+    <div class="rb">
+      <div class="rs"><div class="rsn" id="ecn">0</div><div class="rsl">Correct</div></div>
+      <div class="rs"><div class="rsn" id="ewn">0</div><div class="rsl">Wrong</div></div>
+      <div class="rs"><div class="rsn" id="ebsn">0</div><div class="rsl">Best Streak</div></div>
+    </div>
+  </div>
+  <div class="nav">
+    <button class="btn-p" onclick="startGame()">PLAY AGAIN</button>
+    <button class="btn-s" onclick="showScreen('intro-screen')">← MAIN MENU</button>
+    <button class="btn-s" onclick="showScreen('dossier-screen')">📋 Field Guide</button>
+  </div>
+</div>
+
+<div id="dossier-screen" class="screen">
+  <h2 style="font-family:'Orbitron',monospace;font-size:.9rem;letter-spacing:3px;color:var(--glow);text-align:center;margin-bottom:14px">📋 SOLAR SYSTEM FIELD GUIDE</h2>
+  <div class="dtabs">
+    <button class="dtab active" onclick="showTab('planets')">🪐 Planets</button>
+    <button class="dtab" onclick="showTab('moons')">🌙 Moons</button>
+    <button class="dtab" onclick="showTab('small')">☄️ Small Bodies</button>
+  </div>
+  <div class="dg" id="dossier-grid"></div>
+  <div style="text-align:center;margin-top:18px"><button class="btn-s" onclick="showScreen('intro-screen')">← BACK</button></div>
+</div>
+</div>
+
+<script>
+// STARFIELD
+const cv=document.getElementById('c'),cx=cv.getContext('2d');
+let stars=[];
+function initS(){cv.width=window.innerWidth;cv.height=window.innerHeight;stars=[];for(let i=0;i<180;i++)stars.push({x:Math.random()*cv.width,y:Math.random()*cv.height,r:Math.random()*1.4+.3,o:Math.random(),s:Math.random()*.007+.003})}
+function drawS(){cx.clearRect(0,0,cv.width,cv.height);stars.forEach(s=>{s.o+=s.s;const op=Math.abs(Math.sin(s.o))*.8+.2;cx.beginPath();cx.arc(s.x,s.y,s.r,0,Math.PI*2);cx.fillStyle=`rgba(255,255,255,${op})`;cx.fill()});requestAnimationFrame(drawS)}
+window.addEventListener('resize',initS);initS();drawS();
+
+// ===== DOSSIER DATA =====
+const DOSSIER = {
+  planets: [
+    {emoji:"🪨",name:"Mercury",facts:["No moons, no rings","Closest to Sun","Smallest planet","Day longer than its year","-180°C to 430°C swings"]},
+    {emoji:"🌡️",name:"Venus",facts:["No moons","Hottest planet (465°C)","Spins backwards","Brightest in night sky","Sulfuric acid clouds"]},
+    {emoji:"🌍",name:"Earth",facts:["1 Moon","Only known life","Active plate tectonics","Liquid water surface","Perfect greenhouse balance"]},
+    {emoji:"🔴",name:"Mars",facts:["2 moons: Phobos & Deimos","Olympus Mons: largest volcano","Valles Marineris canyon","Red from iron oxide","38% of Earth gravity"]},
+    {emoji:"🪐",name:"Jupiter",facts:["95 moons","Largest planet","Great Red Spot: 400yr storm","10-hour day","No solid surface"]},
+    {emoji:"🪐",name:"Saturn",facts:["146 moons","Most spectacular rings","Less dense than water","Titan has thick atmosphere","Hexagonal north pole storm"]},
+    {emoji:"🔵",name:"Uranus",facts:["28 moons (Shakespeare names)","Coldest planet (-224°C)","Tilted 98° on its side","13 rings","Ice giant"]},
+    {emoji:"🌀",name:"Neptune",facts:["16 moons","Fastest winds (2,100 km/h)","5 rings","Triton orbits backwards","Deep blue from methane"]}
+  ],
+  moons: [
+    {emoji:"🌋",name:"Io (Jupiter)",facts:["400+ active volcanoes","Most volcanic body in solar system","Sulfur plains cover the surface","No impact craters — lava repaves it","Tidal heating from Jupiter"]},
+    {emoji:"🧊",name:"Europa (Jupiter)",facts:["Global saltwater ocean under ice","Twice Earth's ocean water","Possible hydrothermal vents","Europa Clipper launched 2024","Top candidate for alien life"]},
+    {emoji:"🌕",name:"Ganymede (Jupiter)",facts:["Largest moon in solar system","Bigger than Mercury","Has its own magnetic field","Ice and rock interior","One of 4 Galilean moons"]},
+    {emoji:"💨",name:"Titan (Saturn)",facts:["Only moon with thick atmosphere","Methane lakes on surface","Nitrogen atmosphere like early Earth","Huygens lander visited in 2005","-179°C surface temperature"]},
+    {emoji:"💧",name:"Enceladus (Saturn)",facts:["Water geysers from south pole","Tiger stripe cracks on surface","Subsurface liquid ocean","Cassini flew through its plumes","Organic molecules detected"]},
+    {emoji:"🏔️",name:"Miranda (Uranus)",facts:["Verona Rupes: 20km tall cliff","Highest known cliff in solar system","Bizarre mixed terrain","Fall from top = 12 minutes","Smallest major Uranus moon"]},
+    {emoji:"↩️",name:"Triton (Neptune)",facts:["Orbits backwards (retrograde)","Almost certainly captured KBO","Spiraling inward — will be torn apart","Nitrogen geysers active","Coldest measured surface: -235°C"]},
+    {emoji:"⚖️",name:"Charon (Pluto)",facts:["Half the size of Pluto","Considered a double dwarf planet","Tidally locked to Pluto","Reddish north pole cap","No significant atmosphere"]}
+  ],
+  small: [
+    {emoji:"🤍",name:"Pluto",facts:["Dwarf planet since 2006","5 moons","Heart-shaped Tombaugh Regio","Water ice mountains 3,500m tall","Farthest world visited by spacecraft"]},
+    {emoji:"❄️",name:"Eris",facts:["Most massive dwarf planet","Triggered Pluto's demotion","Has one moon: Dysnomia","Even more distant than Pluto","Surface of frozen methane"]},
+    {emoji:"🥚",name:"Haumea",facts:["Shaped like a rugby ball","Spins once every 4 hours","Has two moons and a ring","Made mostly of rock","In the Kuiper Belt"]},
+    {emoji:"🩷",name:"Makemake",facts:["Dwarf planet in Kuiper Belt","Reddish surface like Pluto","Has one moon: MK2","No detectable atmosphere","Named after a Rapa Nui god"]},
+    {emoji:"🌑",name:"Ceres",facts:["Largest object in asteroid belt","Only dwarf planet in inner solar system","Has bright salt deposits","Once thought to be a planet","Dawn spacecraft visited in 2015"]},
+    {emoji:"☄️",name:"Halley's Comet",facts:["Returns every 75–76 years","Last seen 1986, next: 2061","Visible to naked eye","Known since ancient times","Giotto spacecraft visited in 1986"]},
+    {emoji:"🛸",name:"ʻOumuamua",facts:["First known interstellar visitor","Cigar or pancake shaped","Accelerated unexpectedly","Detected October 2017","Origin: another star system"]},
+    {emoji:"🌠",name:"Borisov Comet",facts:["First confirmed interstellar comet","Detected 2019","Had a visible coma (cloud)","Came from another star system","Named after discoverer Gennady Borisov"]}
+  ]
+};
+
+// ===== ALL PLANETS/OBJECTS FOR CHOICES =====
+const OBJECTS = {
+  // Planets
+  mercury:{name:"Mercury",emoji:"🪨",hint:"Closest to Sun, no moons"},
+  venus:{name:"Venus",emoji:"🌡️",hint:"Hottest planet, spins backwards"},
+  earth:{name:"Earth",emoji:"🌍",hint:"1 Moon, only known life"},
+  mars:{name:"Mars",emoji:"🔴",hint:"2 moons, red planet"},
+  jupiter:{name:"Jupiter",emoji:"🪐",hint:"Largest planet, 95 moons"},
+  saturn:{name:"Saturn",emoji:"🪐",hint:"Famous rings, 146 moons"},
+  uranus:{name:"Uranus",emoji:"🔵",hint:"Tilted 98°, ice giant"},
+  neptune:{name:"Neptune",emoji:"🌀",hint:"Farthest planet, fastest winds"},
+  // Moons
+  io:{name:"Io",emoji:"🌋",hint:"Most volcanic body"},
+  europa:{name:"Europa",emoji:"🧊",hint:"Hidden ocean under ice"},
+  ganymede:{name:"Ganymede",emoji:"🌕",hint:"Largest moon in solar system"},
+  titan:{name:"Titan",emoji:"💨",hint:"Thick atmosphere, methane lakes"},
+  enceladus:{name:"Enceladus",emoji:"💧",hint:"Water geysers, possible ocean"},
+  miranda:{name:"Miranda",emoji:"🏔️",hint:"Tallest cliff in solar system"},
+  triton:{name:"Triton",emoji:"↩️",hint:"Orbits backwards"},
+  charon:{name:"Charon",emoji:"⚖️",hint:"Half the size of Pluto"},
+  phobos:{name:"Phobos",emoji:"🌑",hint:"Mars moon, spiraling inward"},
+  deimos:{name:"Deimos",emoji:"🪨",hint:"Smaller Mars moon"},
+  // Dwarf planets
+  pluto:{name:"Pluto",emoji:"🤍",hint:"Dwarf planet, heart-shaped plain"},
+  eris:{name:"Eris",emoji:"❄️",hint:"Most massive dwarf planet"},
+  haumea:{name:"Haumea",emoji:"🥚",hint:"Rugby ball shaped, spins fast"},
+  makemake:{name:"Makemake",emoji:"🩷",hint:"Reddish Kuiper Belt dwarf"},
+  ceres:{name:"Ceres",emoji:"🌑",hint:"Largest asteroid belt object"},
+  // Comets & visitors
+  halley:{name:"Halley's Comet",emoji:"☄️",hint:"Returns every 75–76 years"},
+  oumuamua:{name:"ʻOumuamua",emoji:"🛸",hint:"First interstellar visitor"},
+  borisov:{name:"Borisov",emoji:"🌠",hint:"First interstellar comet"},
+  haleBopp:{name:"Hale-Bopp",emoji:"💫",hint:"Great Comet of 1997"},
+  shoemaker:{name:"Shoemaker-Levy 9",emoji:"💥",hint:"Crashed into Jupiter 1994"},
+  // Regions
+  asteroidBelt:{name:"Asteroid Belt",emoji:"🪨",hint:"Between Mars and Jupiter"},
+  kuiperBelt:{name:"Kuiper Belt",emoji:"🌌",hint:"Beyond Neptune"},
+  oortCloud:{name:"Oort Cloud",emoji:"🌫️",hint:"Most distant region"},
+};
+
+// ===== QUESTION BANK (70 questions) =====
+const QS = [
+  // ---- PLANETS (original set) ----
+  {cat:"Planets",clue:`Our probe orbits a planet where a <span class="ck">day is longer than its year</span> — it rotates so slowly the Sun rises only twice per orbit. Surface pressure is <span class="ck">92 times Earth's</span>. No moons. No rings. Which planet?`,answer:"venus",decoys:["mercury","mars","earth"],exp:"Venus rotates so slowly — and backwards — that a day (243 Earth days) is longer than its year (225 Earth days). The crushing pressure is why probes only survive about 2 hours on the surface."},
+  {cat:"Planets",clue:`This tiny planet has a <span class="ck">disproportionately large iron core</span> — about 85% of its radius. Without an atmosphere, its sunlit side hits <span class="ck">430°C</span> while the dark side plunges to <span class="ck">-180°C</span>. Which planet?`,answer:"mercury",decoys:["venus","mars","earth"],exp:"Mercury's oversized iron core is thought to be due to a massive ancient collision that stripped away its outer layers. No atmosphere means nothing to hold in or block heat."},
+  {cat:"Planets",clue:`This planet's <span class="ck">axis is tilted 98 degrees</span> — rolling around the Sun on its side. Its poles get <span class="ck">42 Earth-years of sunlight</span> followed by 42 years of darkness. Which planet?`,answer:"uranus",decoys:["neptune","saturn","jupiter"],exp:"Uranus has the most extreme axial tilt in the solar system. A proposed Uranus Orbiter mission has been recommended as NASA's next flagship mission."},
+  {cat:"Planets",clue:`A moon called <span class="ck">Triton</span> orbits in a <span class="ck">retrograde direction</span> — opposite to its planet's spin — and is slowly spiraling inward. The planet has winds exceeding <span class="ck">2,100 km/h</span>. Which planet?`,answer:"neptune",decoys:["uranus","saturn","jupiter"],exp:"Triton is almost certainly a captured Kuiper Belt Object. In roughly 3.6 billion years, tidal forces will tear it apart and it will form a new ring system around Neptune."},
+  {cat:"Planets",clue:`This planet hosts <span class="ck">Olympus Mons</span> — the largest volcano in the solar system, 21km tall and 600km wide — plus <span class="ck">Valles Marineris</span>, a canyon 10 times longer than the Grand Canyon. Which planet?`,answer:"mars",decoys:["mercury","venus","earth"],exp:"Olympus Mons is so huge it creates its own weather system. Valles Marineris stretches 4,000km and formed through tectonic rifting rather than water erosion."},
+  {cat:"Planets",clue:`This planet has <span class="ck">95 confirmed moons</span>, no solid surface, and a storm called the <span class="ck">Great Red Spot</span> that has raged for over 350 years — bigger than Earth itself. Which planet?`,answer:"jupiter",decoys:["saturn","neptune","uranus"],exp:"Jupiter's Great Red Spot is a high-pressure anticyclonic storm with winds reaching 640 km/h. It has been shrinking in recent decades — scientists don't know if it will eventually disappear."},
+  {cat:"Planets",clue:`This planet's rings span <span class="ck">282,000 km</span> edge to edge but average only <span class="ck">10 metres thick</span>. The <span class="ck">Cassini Division</span> is a 4,800km visible gap. Its density is less than water. Which planet?`,answer:"saturn",decoys:["jupiter","uranus","neptune"],exp:"Saturn's rings are probably only 100 million years old — young in solar system terms. Its low density means it would technically float in a bathtub large enough to hold it."},
+  {cat:"Planets",clue:`This is the <span class="ck">only planet known to have active plate tectonics</span>, broken into <span class="ck">7 major plates</span> that recycle carbon and regulate climate — likely essential for supporting life. Which planet?`,answer:"earth",decoys:["mars","venus","mercury"],exp:"Plate tectonics acts as a long-term thermostat for Earth's climate. Mars and Venus both lack it, which may partly explain why they lost their habitability billions of years ago."},
+  {cat:"Planets",clue:`This planet completes one orbit in just <span class="ck">88 Earth days</span> at <span class="ck">47 km per second</span>, yet its rotation is so slow that a <span class="ck">solar day lasts 176 Earth days</span> — a year shorter than a day. Which planet?`,answer:"mercury",decoys:["venus","mars","earth"],exp:"Mercury's fast orbit combined with slow rotation means a solar day (sunrise to sunrise) lasts two Mercury years. From its surface, the Sun would appear to rise, stop, reverse briefly, then continue."},
+  {cat:"Planets",clue:`This planet spins <span class="ck">clockwise</span> — retrograde — so the Sun rises in the west and sets in the east. It has the <span class="ck">longest day of any planet</span> at 243 Earth days, and surface temperatures melt lead. Which planet?`,answer:"venus",decoys:["mercury","mars","uranus"],exp:"Venus's retrograde spin may be because it was knocked nearly upside down by an ancient collision, or it gradually reversed due to tidal interactions. Either way it's unique among the planets."},
+  {cat:"Planets",clue:`Light from the Sun takes <span class="ck">over 4 hours</span> to reach this planet. <span class="ck">Voyager 2 took 12 years</span> to reach it after its 1977 launch — and remains the <span class="ck">only spacecraft to visit it</span>. Which planet?`,answer:"neptune",decoys:["uranus","saturn","jupiter"],exp:"Neptune is so remote that even at the speed of light the journey takes 4+ hours. Voyager 2 flew by in 1989 — it is still the only spacecraft to have visited Neptune."},
+  {cat:"Planets",clue:`This planet has a bizarre <span class="ck">hexagonal storm at its north pole</span> — a six-sided jet stream pattern wider than Earth that has persisted for decades. Its moon <span class="ck">Enceladus</span> shoots water geysers into space. Which planet?`,answer:"saturn",decoys:["jupiter","neptune","uranus"],exp:"Each side of Saturn's north polar hexagon is longer than Earth's diameter. Scientists still don't fully understand why the storm maintains its geometric shape."},
+
+  // ---- MOONS ----
+  {cat:"Moons",clue:`This moon has over <span class="ck">400 active volcanoes</span> — the most geologically active body in the solar system. Its eruptions shoot sulfur <span class="ck">300 km into space</span>. It has no impact craters because lava repaves the surface too quickly. Which moon?`,answer:"io",decoys:["europa","ganymede","titan"],exp:"Io is caught in a gravitational tug-of-war between Jupiter and the other Galilean moons, generating immense internal heat. Its surface is constantly being repaved — the youngest surface of any solid body."},
+  {cat:"Moons",clue:`This moon has a <span class="ck">global saltwater ocean</span> hidden under an icy shell, estimated to contain <span class="ck">twice as much water as all Earth's oceans</span>. Tidal heating keeps it liquid. NASA's <span class="ck">Europa Clipper</span> launched in 2024. Which moon?`,answer:"europa",decoys:["enceladus","titan","ganymede"],exp:"Europa's ocean has been liquid for billions of years — long enough for life to potentially develop. The Europa Clipper will make 49 close flybys, studying the ice shell and searching for biosignatures."},
+  {cat:"Moons",clue:`This is the <span class="ck">largest moon in the solar system</span> — bigger than the planet Mercury. It is the only moon known to have its own <span class="ck">magnetic field</span>. It orbits Jupiter and is one of the four Galilean moons. Which moon?`,answer:"ganymede",decoys:["titan","io","europa"],exp:"Ganymede's magnetic field creates its own miniature magnetosphere within Jupiter's enormous one. It's also believed to have a saltwater ocean buried deep beneath its icy crust."},
+  {cat:"Moons",clue:`This moon of Saturn has a <span class="ck">thick nitrogen atmosphere</span> — the only moon in the solar system with one — and rivers and lakes of <span class="ck">liquid methane</span> on its surface. The Huygens lander visited in 2005. Which moon?`,answer:"titan",decoys:["enceladus","io","ganymede"],exp:"Titan's atmosphere is actually denser than Earth's. Its methane cycle (rain, rivers, lakes) mirrors Earth's water cycle. Scientists dream of sending a submarine to explore its methane seas."},
+  {cat:"Moons",clue:`This small moon of Saturn shoots <span class="ck">geysers of water vapor</span> from cracks near its south pole called <span class="ck">tiger stripes</span>. The Cassini spacecraft flew through its plumes and detected <span class="ck">organic molecules and hydrogen</span>. Which moon?`,answer:"enceladus",decoys:["titan","europa","io"],exp:"The detection of molecular hydrogen in Enceladus's plumes suggests active hydrothermal vents on the ocean floor — the same environment where life may have first appeared on Earth."},
+  {cat:"Moons",clue:`This moon of Uranus has a cliff called <span class="ck">Verona Rupes</span> — approximately <span class="ck">20 km tall</span>, the highest known cliff in the solar system. In low gravity, a fall from the top would take about <span class="ck">12 minutes</span>. Which moon?`,answer:"miranda",decoys:["triton","charon","titan"],exp:"Miranda has one of the most geologically bizarre surfaces in the solar system — a jumble of terrain types that suggests it may have been shattered and reassembled by an ancient collision."},
+  {cat:"Moons",clue:`This moon of Neptune orbits in a <span class="ck">retrograde direction</span> — the opposite of Neptune's spin — proving it was <span class="ck">captured from the Kuiper Belt</span> rather than forming in place. It is slowly spiraling inward. Which moon?`,answer:"triton",decoys:["charon","titan","ganymede"],exp:"Triton has active nitrogen geysers and one of the coldest measured surfaces in the solar system at -235°C. In about 3.6 billion years, tidal forces will tear it apart into a new ring system."},
+  {cat:"Moons",clue:`This moon is <span class="ck">half the size of Pluto</span> — so large relative to its parent body that the two are considered a <span class="ck">double dwarf planet</span> system. They are tidally locked: each always shows the same face to the other. Which moon?`,answer:"charon",decoys:["triton","titan","ganymede"],exp:"Charon and Pluto orbit a common center of gravity that lies between them — outside Pluto itself. No other planet/moon pair in the solar system is so similar in size."},
+  {cat:"Moons",clue:`This moon of Mars orbits so <span class="ck">close and so fast</span> that it rises in the west and sets in the east — twice a day. Tidal forces are slowly pulling it toward Mars, where it will eventually <span class="ck">crash or form a ring</span>. Which moon?`,answer:"phobos",decoys:["deimos","charon","io"],exp:"Phobos completes an orbit in just 7 hours 39 minutes — faster than Mars rotates. In about 50 million years it will either break apart into a ring or crash into Mars."},
+  {cat:"Moons",clue:`This moon of Jupiter is the most <span class="ck">heavily cratered object in the solar system</span> — its ancient surface has been bombarded for billions of years. Unlike its siblings Io and Europa, it shows no signs of geological activity. Which moon?`,answer:"callisto",decoys:["ganymede","io","europa"],exp:"Callisto is the outermost of the four Galilean moons and sits outside Jupiter's intense radiation belts. Its surface is the oldest in the Jovian system — a record of 4 billion years of impacts."},
+  {cat:"Moons",clue:`This moon has a reddish north pole cap, possibly stained by material escaping from Pluto's atmosphere and freezing on its surface. It is tidally locked to Pluto — they always show the <span class="ck">same faces to each other</span>. Which moon?`,answer:"charon",decoys:["triton","titan","io"],exp:"Charon's reddish pole (called Mordor Macula) is thought to be a 'cold trap' where molecules from Pluto's thin atmosphere migrate, freeze, and get chemically altered by radiation into reddish compounds."},
+  {cat:"Moons",clue:`This moon is the <span class="ck">second largest in the solar system</span> and the only moon known to have a dense atmosphere. A proposed NASA mission called <span class="ck">Dragonfly</span> will send a rotorcraft to explore it in the 2030s. Which moon?`,answer:"titan",decoys:["ganymede","io","triton"],exp:"Dragonfly will hop across Titan's surface like a drone, exploring different geological sites. Titan's thick atmosphere and low gravity make it perfect for rotorcraft flight."},
+
+  // ---- DWARF PLANETS ----
+  {cat:"Dwarf Planets",clue:`This dwarf planet was demoted in <span class="ck">2006</span> when the IAU created the 'dwarf planet' category. New Horizons revealed a <span class="ck">heart-shaped plain of nitrogen ice</span> called Tombaugh Regio and mountains of water ice 3,500m tall. Which body?`,answer:"pluto",decoys:["eris","makemake","haumea"],exp:"Clyde Tombaugh discovered Pluto in 1930. The New Horizons flyby in 2015 stunned scientists with its geological complexity. Many planetary scientists still argue Pluto should be reclassified as a planet."},
+  {cat:"Dwarf Planets",clue:`This dwarf planet is actually <span class="ck">more massive than Pluto</span> — its discovery in 2005 directly triggered Pluto's demotion. It has one moon called <span class="ck">Dysnomia</span> and a surface of frozen methane. Which body?`,answer:"eris",decoys:["pluto","makemake","haumea"],exp:"Eris was nicknamed 'Xena' before receiving its official name after the Greek goddess of discord — fitting, since its discovery caused so much debate about what counts as a planet."},
+  {cat:"Dwarf Planets",clue:`This dwarf planet in the Kuiper Belt is shaped like a <span class="ck">rugby ball</span> — stretched out because it spins so fast, completing a rotation every <span class="ck">4 hours</span>. It has two moons and a ring system. Which body?`,answer:"haumea",decoys:["eris","makemake","pluto"],exp:"Haumea spins faster than any other known large body in the solar system. Its elongated shape is entirely due to this rapid rotation. It was discovered in 2004 and named after the Hawaiian goddess of childbirth."},
+  {cat:"Dwarf Planets",clue:`This dwarf planet has a <span class="ck">reddish surface</span> similar to Pluto, one small moon called <span class="ck">MK2</span>, and almost no detectable atmosphere. It is named after a god from <span class="ck">Rapa Nui (Easter Island)</span> mythology. Which body?`,answer:"makemake",decoys:["eris","haumea","pluto"],exp:"Makemake was discovered in 2005, just weeks before Eris. Its reddish color comes from frozen organic compounds called tholins on its surface, formed by radiation hitting methane."},
+  {cat:"Dwarf Planets",clue:`This is the <span class="ck">only dwarf planet in the inner solar system</span> — located in the asteroid belt between Mars and Jupiter. The Dawn spacecraft found bright white spots on its surface — actually <span class="ck">salt deposits from ancient water</span>. Which body?`,answer:"ceres",decoys:["pluto","eris","vesta"],exp:"Ceres was originally classified as a planet when discovered in 1801, then demoted to asteroid, then promoted to dwarf planet in 2006. Its bright spots in Occator Crater are sodium carbonate from ancient briny water."},
+  {cat:"Dwarf Planets",clue:`This object in the <span class="ck">scattered disc</span> beyond the Kuiper Belt has the most elongated orbit of any known dwarf planet candidate, taking <span class="ck">11,400 years to orbit the Sun</span>. Some call it a 'distant detached object.' Which body?`,answer:"sedna",decoys:["eris","makemake","pluto"],exp:"Sedna's extreme orbit takes it from 76 AU at closest to about 937 AU at its farthest — so remote that sunlight reaching it is 8,700 times weaker than at Earth. Its origin remains mysterious."},
+
+  // ---- COMETS ----
+  {cat:"Comets",clue:`This famous comet returns to the inner solar system every <span class="ck">75–76 years</span>. It was last visible from Earth in <span class="ck">1986</span> and won't return until <span class="ck">2061</span>. The European Giotto spacecraft flew close to its nucleus in 1986. Which comet?`,answer:"halley",decoys:["haleBopp","oumuamua","borisov"],exp:"Halley's Comet has been observed and recorded since at least 240 BC. Its 1986 visit was disappointing visually but scientifically invaluable — Giotto revealed a dark, potato-shaped nucleus covered in jets of gas."},
+  {cat:"Comets",clue:`This comet became the <span class="ck">Great Comet of 1997</span> — visible to the naked eye for a record-breaking <span class="ck">18 months</span>. It had an unusually large and active nucleus. It won't return for about <span class="ck">2,500 years</span>. Which comet?`,answer:"haleBopp",decoys:["halley","borisov","oumuamua"],exp:"Hale-Bopp was discovered in 1995 by two amateur astronomers independently on the same night. Its bright twin tails — one dust, one ion — were visible even from light-polluted cities."},
+  {cat:"Comets",clue:`In 1994, this comet famously <span class="ck">broke into 21 fragments</span> and crashed into <span class="ck">Jupiter</span> over six days. The impacts left dark scars in Jupiter's atmosphere larger than Earth. Which comet?`,answer:"shoemaker",decoys:["halley","haleBopp","borisov"],exp:"Shoemaker-Levy 9 was the first direct observation of a collision between solar system objects. It was captured by Jupiter's gravity, torn apart by tidal forces, then crashed in 1994. The impacts were watched by telescopes worldwide including Hubble."},
+  {cat:"Comets",clue:`This comet designated <span class="ck">C/2019 Y4</span> was predicted to become the <span class="ck">brightest comet in decades</span> in 2020 — but it <span class="ck">broke apart</span> before reaching the Sun. It was discovered by the ATLAS survey telescope. Which comet?`,answer:"atlas",decoys:["halley","haleBopp","borisov"],exp:"Comet ATLAS disintegrated into dozens of fragments as it approached the Sun in April 2020. This is common for comets — solar heat and tidal forces can shatter their loosely bound nuclei before they put on their promised show."},
+
+  // ---- ASTEROID BELT ----
+  {cat:"Asteroid Belt",clue:`The asteroid belt lies between <span class="ck">Mars and Jupiter</span>. Despite containing millions of objects, its total mass is less than <span class="ck">4% of the Moon's mass</span>. Most of the belt is empty space. What region is this?`,answer:"asteroidBelt",decoys:["kuiperBelt","oortCloud","neptune"],exp:"The asteroid belt's low total mass is because Jupiter's gravity prevented the material from ever coalescing into a planet. The asteroids are not remains of a destroyed planet — they're primordial leftovers."},
+  {cat:"Asteroid Belt",clue:`This is the <span class="ck">largest asteroid</span> in the asteroid belt, accounting for about <span class="ck">9% of the belt's total mass</span>. It is also considered a dwarf planet. The Dawn spacecraft orbited it in 2015. Which body?`,answer:"ceres",decoys:["vesta","eris","pluto"],exp:"Ceres is so large it pulled itself into a roughly spherical shape under its own gravity — the criterion that distinguishes dwarf planets from regular asteroids. Dawn orbited Ceres after visiting Vesta."},
+  {cat:"Asteroid Belt",clue:`This large asteroid is one of the <span class="ck">most massive in the belt</span> and has a <span class="ck">giant canyon</span> named Rheasilvia — wider than the United States — and a mountain twice the height of Everest at its center. Which body?`,answer:"vesta",decoys:["ceres","eris","phobos"],exp:"Vesta's Rheasilvia impact basin is one of the largest in the solar system. The collision was so powerful it blasted chunks of Vesta throughout the solar system — and some of those chunks eventually fell to Earth as meteorites."},
+
+  // ---- KUIPER BELT ----
+  {cat:"Kuiper Belt",clue:`The Kuiper Belt is a region of the solar system extending from <span class="ck">Neptune's orbit</span> to about <span class="ck">50 AU from the Sun</span>. It contains hundreds of thousands of icy objects. Which region is this?`,answer:"kuiperBelt",decoys:["asteroidBelt","oortCloud","neptune"],exp:"The Kuiper Belt is like the asteroid belt but much larger and composed mainly of ice rather than rock. Pluto, Eris, Makemake, and Haumea are all Kuiper Belt Objects (KBOs). Triton is thought to be a captured KBO."},
+  {cat:"Kuiper Belt",clue:`Beyond the Kuiper Belt lies the <span class="ck">Oort Cloud</span> — a vast spherical shell of icy bodies reaching up to <span class="ck">100,000 AU from the Sun</span> — nearly a quarter of the way to the nearest star. Most <span class="ck">long-period comets</span> originate here. What region is this?`,answer:"oortCloud",decoys:["kuiperBelt","asteroidBelt","neptune"],exp:"The Oort Cloud has never been directly observed — it's inferred from the orbits of long-period comets that arrive from all directions. Halley's Comet comes from the Kuiper Belt, but truly ancient comets with orbits of millions of years come from the Oort Cloud."},
+  {cat:"Kuiper Belt",clue:`Pluto's weird orbit — tilted and elliptical — occasionally brings it <span class="ck">closer to the Sun than Neptune</span>. Pluto is now recognized as the largest known <span class="ck">Kuiper Belt Object</span>. How far does the Kuiper Belt extend?`,answer:"kuiperBelt",decoys:["asteroidBelt","oortCloud","saturn"],exp:"The Kuiper Belt extends from about 30 AU (Neptune's orbit) to about 50 AU. Beyond that is the scattered disc, and beyond that the Oort Cloud. Pluto's orbit is tilted 17° to the solar plane, which is why it doesn't interact with Neptune despite crossing its path."},
+
+  // ---- INTERSTELLAR VISITORS ----
+  {cat:"Interstellar",clue:`In 2017, astronomers detected an object moving too fast to be gravitationally bound to the Sun. It was <span class="ck">cigar or pancake shaped</span>, tumbling through space, and <span class="ck">accelerated unexpectedly</span> as it left the solar system. What was it?`,answer:"oumuamua",decoys:["borisov","halley","haleBopp"],exp:"ʻOumuamua (Hawaiian for 'first distant messenger') was the first confirmed interstellar object. Its unexpected acceleration puzzled scientists — hypotheses include outgassing, hydrogen iceberg, or... other things. Astronomer Avi Loeb controversially suggested it might be artificial."},
+  {cat:"Interstellar",clue:`In 2019, this interstellar visitor became the <span class="ck">first confirmed interstellar comet</span>. Unlike ʻOumuamua, it had a visible <span class="ck">coma</span> (cloud of gas and dust) — making it unmistakably a comet. It was named after its discoverer. What was it?`,answer:"borisov",decoys:["oumuamua","halley","haleBopp"],exp:"Gennady Borisov, a Crimean amateur astronomer, spotted the comet in August 2019. Borisov's composition appeared similar to solar system comets, suggesting comets throughout the galaxy may share similar chemistry."},
+  {cat:"Interstellar",clue:`ʻOumuamua was detected traveling at <span class="ck">87.7 km per second</span> — far too fast to be gravitationally bound to our Sun. Scientists calculated it came from the direction of <span class="ck">Vega</span>, though it left that star about <span class="ck">300,000 years ago</span>. What type of object was it?`,answer:"oumuamua",decoys:["borisov","halley","shoemaker"],exp:"ʻOumuamua's path through our solar system took it past the Sun in September 2017. Astronomers discovered it in October 2017, already on its way out. We will almost certainly detect more interstellar visitors as telescope technology improves."},
+  {cat:"Interstellar",clue:`Two interstellar objects have been confirmed visiting our solar system. The first, in 2017, showed <span class="ck">no coma or tail</span>. The second, in 2019, did have a coma — making it clearly a <span class="ck">comet from another star system</span>. What is the second one called?`,answer:"borisov",decoys:["oumuamua","halley","atlas"],exp:"The fact that we detected two interstellar visitors within just two years suggests such objects may be far more common than previously thought. Future surveys like the Vera Rubin Observatory should detect many more."},
+
+  // ---- MORE PLANETS (additional) ----
+  {cat:"Planets",clue:`This planet's <span class="ck">magnetic field is tilted 47 degrees</span> from its rotational axis AND offset from the planet's center — unlike any other planet. Scientists think a slushy electrically-conducting layer causes this. Its ice may be <span class="ck">superionic</span>. Which planet?`,answer:"neptune",decoys:["uranus","saturn","jupiter"],exp:"Superionic water is a bizarre state of matter where oxygen atoms lock into a solid lattice while hydrogen protons flow freely — like a hybrid solid and liquid simultaneously. Both Neptune and Uranus may have this in their interiors."},
+  {cat:"Planets",clue:`This planet's upper cloud layers reach <span class="ck">-110°C</span> but its core temperature may be <span class="ck">24,000°C</span> — hotter than the Sun's surface. Its magnetic field is <span class="ck">20,000 times stronger than Earth's</span> and it contains the only known metallic hydrogen. Which planet?`,answer:"jupiter",decoys:["saturn","neptune","uranus"],exp:"Jupiter radiates more heat than it receives from the Sun — its interior is still slowly contracting and releasing gravitational energy from its formation. The metallic hydrogen layer in its interior acts like a giant electrical generator."},
+  {cat:"Planets",clue:`This planet emits <span class="ck">very little internal heat</span> — unlike the other giant planets which radiate more energy than they receive from the Sun. Voyager 2 discovered its magnetic field was tilted <span class="ck">59 degrees</span> and found 10 new moons in a single flyby. Which planet?`,answer:"uranus",decoys:["neptune","saturn","jupiter"],exp:"Why Uranus emits so little internal heat is one of the great mysteries of planetary science. One theory is that a layer inside traps the heat from escaping — like a thermal blanket."},
+  {cat:"Planets",clue:`This planet's atmosphere is <span class="ck">96.5% carbon dioxide</span>. Surface winds are slow — under 5 km/h — but upper atmosphere winds reach <span class="ck">360 km/h</span>, circling the entire planet in just 4 Earth days. Which planet?`,answer:"venus",decoys:["mars","mercury","earth"],exp:"Venus has 'super-rotation' — its upper atmosphere races around the planet far faster than the surface below. Scientists have proposed floating cloud cities at 50km altitude where temperatures are Earth-like, despite the hellish surface below."},
+  {cat:"Planets",clue:`This planet's two tiny moons — <span class="ck">Phobos and Deimos</span> — are thought to be captured asteroids from the nearby asteroid belt. Phobos is so close it orbits faster than the planet rotates, rising in the <span class="ck">west and setting in the east</span>. Which planet?`,answer:"mars",decoys:["earth","jupiter","saturn"],exp:"Phobos completes 3 orbits of Mars every Martian day. It's gradually spiraling inward and will either crash into Mars or break apart into a ring in about 50 million years. Deimos, the smaller moon, is slowly drifting away."},
+
+  // ---- MORE MOONS ----
+  {cat:"Moons",clue:`This moon of Jupiter has a surface completely covered in <span class="ck">sulfur and sulfur dioxide frost</span> — giving it a yellow, orange, and white appearance. Its volcanic eruptions are driven by <span class="ck">tidal heating</span> from Jupiter's enormous gravity. Which moon?`,answer:"io",decoys:["europa","ganymede","titan"],exp:"Io's volcanic output is about 40 times greater than all of Earth's volcanoes combined. Some eruptions reach 500 km high. Io's surface temperature near volcanoes can reach 1,600°C — hotter than most of Earth's lava."},
+  {cat:"Moons",clue:`This moon has a smooth icy surface covered in cracks and ridges but <span class="ck">almost no impact craters</span> — suggesting the surface is geologically young and actively resurfaced. Its ocean may have <span class="ck">hydrothermal vents</span> on the ocean floor. Which moon?`,answer:"europa",decoys:["enceladus","ganymede","titan"],exp:"Europa's lack of craters means its ice shell is constantly being reformed from below. The fractured ice patterns called 'chaos terrain' suggest the ice shell is thin in places and the ocean below occasionally breaks through."},
+  {cat:"Moons",clue:`This moon of Saturn is so small — only 500km across — that it can barely maintain a <span class="ck">spherical shape</span>. Yet it has a global liquid water ocean and shoots <span class="ck">water and organic molecules</span> into space through cracks in its south pole. Which moon?`,answer:"enceladus",decoys:["titan","europa","io"],exp:"For its size, Enceladus is one of the most remarkable objects in the solar system. Its geysers feed Saturn's E ring. The detection of phosphorus in its plumes in 2023 completed the set of all 6 elements considered essential for life."},
+  {cat:"Moons",clue:`This moon of Saturn is the <span class="ck">only moon in the solar system</span> where a spacecraft has landed on the surface. The Huygens probe touched down in 2005 and photographed a landscape with rounded pebbles of water ice shaped by <span class="ck">flowing methane</span>. Which moon?`,answer:"titan",decoys:["io","europa","enceladus"],exp:"Huygens survived 72 minutes on Titan's surface, transmitting data about the methane landscape. The rounded pebbles suggest they were tumbled by flowing liquid methane rivers, just as river pebbles on Earth are rounded by water."},
+
+  // ---- MORE COMETS & SMALL BODIES ----
+  {cat:"Comets",clue:`A comet has two types of tails. The <span class="ck">dust tail</span> curves gently behind the comet's orbit, while the <span class="ck">ion tail</span> always points directly away from the Sun — blown by the solar wind. What are comets mostly made of?`,answer:"halley",decoys:["oumuamua","asteroidBelt","kuiperBelt"],exp:"Comets are often described as 'dirty snowballs' — loose collections of ice, rock, and dust. When they approach the Sun, solar heat vaporizes the ice, creating the glowing coma and tails. Halley's Comet nucleus is about 15km long."},
+  {cat:"Comets",clue:`This comet is predicted to return to our inner solar system in <span class="ck">2061</span>. People alive today who are young enough might see it as a spectacular naked-eye object. It takes <span class="ck">75–76 years</span> to orbit the Sun. Which comet?`,answer:"halley",decoys:["haleBopp","borisov","atlas"],exp:"Halley's Comet is classified as a 'short-period comet' from the Kuiper Belt. Its 1986 apparition was disappointing because Earth was poorly positioned, but its 2061 return should be much more spectacular from Earth's perspective."},
+  {cat:"Kuiper Belt",clue:`This distant object has a surface temperature of only <span class="ck">-240°C</span> — one of the coldest known surfaces in the solar system. Its highly elongated orbit takes it <span class="ck">11,400 years</span> to complete, and it never gets close enough to the Sun to develop a comet tail. Which body?`,answer:"sedna",decoys:["eris","pluto","makemake"],exp:"Sedna's extreme orbit has led some astronomers to propose it was pulled into its current path by a passing star billions of years ago — or even by a hypothetical undiscovered large planet in the outer solar system (sometimes called 'Planet Nine')."},
+
+  // ---- SCIENCE & EXPLORATION ----
+  {cat:"Exploration",clue:`The <span class="ck">Voyager 1</span> spacecraft, launched in 1977, is now the <span class="ck">most distant human-made object</span> — over 23 billion km from the Sun. It crossed into <span class="ck">interstellar space</span> in 2012. It is still communicating with Earth. Which region has it entered?`,answer:"oortCloud",decoys:["kuiperBelt","asteroidBelt","neptune"],exp:"Voyager 1 crossed the heliopause — the boundary where the Sun's solar wind gives way to interstellar space — in 2012. Its signals now take over 22 hours to reach Earth. It carries a golden record with sounds and images of Earth."},
+  {cat:"Exploration",clue:`The <span class="ck">James Webb Space Telescope</span>, launched in 2021, observes in <span class="ck">infrared light</span> — allowing it to see through dust clouds and observe the universe's first galaxies. It sits at a special gravitational balance point called <span class="ck">L2</span>, 1.5 million km from Earth. Which region?`,answer:"oortCloud",decoys:["asteroidBelt","kuiperBelt","neptune"],exp:"L2 is one of the 'Lagrange points' where gravity from the Sun and Earth balance perfectly, allowing JWST to orbit the Sun in sync with Earth without expending fuel. JWST has already imaged galaxies from just 300 million years after the Big Bang."},
+  {cat:"Exploration",clue:`The <span class="ck">New Horizons</span> spacecraft flew past Pluto in 2015 and then past a Kuiper Belt Object called <span class="ck">Arrokoth</span> in 2019 — the most distant object ever visited by a spacecraft. Arrokoth is shaped like a <span class="ck">contact binary snowman</span>. Which region does it explore?`,answer:"kuiperBelt",decoys:["asteroidBelt","oortCloud","neptune"],exp:"Arrokoth (nicknamed 'Ultima Thule') showed that Kuiper Belt Objects gently merge rather than collide violently — its two lobes drifted together slowly. New Horizons is now heading deeper into the Kuiper Belt with no further planned flybys."},
+];
+
+// ===== BONUS QUESTIONS =====
+const BQ=[
+  {clue:`The largest known black hole, <span class="ck">TON 618</span>, is so massive our entire solar system would fit inside it. How many times more massive is it than our Sun?`,con:null,choices:["66 million times","6.6 billion times","66 billion times","660 million times"],answer:"66 billion times",exp:"TON 618 has a mass of 66 billion suns. By comparison, the black hole at our Milky Way's center, Sagittarius A*, is 'only' 4 million solar masses."},
+  {clue:`The red supergiant <span class="ck">Betelgeuse</span> — Orion's bright orange-red shoulder star — is so enormous it would swallow Mercury, Venus, Earth, and Mars if placed at our Sun. It's expected to explode as a supernova. When?`,con:"orion",choices:["Tomorrow","Within 100,000 years","In exactly 2036","In 5 billion years"],answer:"Within 100,000 years",exp:"In 2019-2020, Betelgeuse dimmed dramatically (the 'Great Dimming'). When it eventually explodes, it will briefly outshine the full Moon and be visible in daylight."},
+  {clue:`This constellation looks like a giant W or M — named after a queen in Greek mythology forced to circle the north pole forever as punishment. Which constellation is it?`,con:"cassiopeia",choices:["Orion","Cassiopeia","Lyra","Perseus"],answer:"Cassiopeia",exp:"Cassiopeia is circumpolar — visible year-round from northern latitudes. Queen Cassiopeia boasted she was more beautiful than the sea nymphs, angering Poseidon."},
+  {clue:`The <span class="ck">Big Dipper</span> is not a constellation but an <span class="ck">asterism</span> — a pattern within one. Its two pointer stars (Dubhe and Merak) point directly to Polaris, the North Star. Which constellation contains the Big Dipper?`,con:"bigdipper",choices:["Ursa Minor","Ursa Major","Draco","Boötes"],answer:"Ursa Major",exp:"The Big Dipper is the most visible part of Ursa Major (the Great Bear). The handle represents the bear's tail — anatomically incorrect for a real bear, which is why some cultures see it differently."},
+  {clue:`A <span class="ck">neutron star</span> packs more mass than the Sun into a ball about <span class="ck">20 km across</span>. A teaspoon of neutron star material would weigh approximately how much on Earth?`,con:null,choices:["1 kilogram","1 tonne","1 billion tonnes","10 million tonnes"],answer:"1 billion tonnes",exp:"Neutron stars are the densest objects we can directly observe. Some spin 700 times per second — these are called millisecond pulsars. They emit beams of radiation like cosmic lighthouses."},
+  {clue:`Our Sun is located about <span class="ck">26,000 light-years from the center</span> of the Milky Way. How long does it take our solar system to complete one full orbit of the galaxy?`,con:null,choices:["1 million years","25 million years","225 million years","2 billion years"],answer:"225 million years",exp:"One galactic year is about 225 million Earth years. The last time Earth was in this position in its galactic orbit, it was the Triassic period — dinosaurs had just appeared."},
+  {clue:`The <span class="ck">Andromeda Galaxy</span> is heading toward us at 110 km per second. It is currently 2.5 million light-years away. What will happen in approximately 4.5 billion years?`,con:null,choices:["It will miss us entirely","It will orbit the Milky Way","It will collide and merge with the Milky Way","It will be destroyed by our black hole"],answer:"It will collide and merge with the Milky Way",exp:"Despite the collision, the chance of any individual star hitting another is almost zero — space is too empty. Our Sun will likely be flung into a new orbit within the merged 'Milkomeda' galaxy."},
+  {clue:`When you look at <span class="ck">Betelgeuse</span>, you see light that left the star approximately <span class="ck">700 years ago</span>. The star could have already exploded and we wouldn't know yet. What is the correct term for this time-delay effect?`,con:"orion",choices:["Real-time starlight","The star's future","The star's past — lookback time","A reflection of our Sun"],answer:"The star's past — lookback time",exp:"Astronomers call this 'lookback time.' When we observe galaxies billions of light-years away, we see them as they were billions of years ago — the universe's baby photos."},
+  {clue:`The universe is estimated to be <span class="ck">13.8 billion years old</span>. Earth formed 4.5 billion years ago. How long did the universe exist before Earth formed?`,con:null,choices:["1 billion years","4.5 billion years","9.3 billion years","13 billion years"],answer:"9.3 billion years",exp:"The universe existed for over 9 billion years before Earth formed — long enough for many previous generations of stars to live and die, forging the heavy elements (carbon, oxygen, iron) that Earth and we are made of."},
+  {clue:`<span class="ck">Dark matter</span> is invisible but its gravity shapes galaxies. Galaxies spin too fast to hold together with only visible matter — dark matter provides extra gravity. Roughly what percentage of the universe is dark matter?`,con:null,choices:["5%","27%","68%","95%"],answer:"27%",exp:"The universe is approximately: 68% dark energy, 27% dark matter, and only 5% ordinary matter. Everything we've ever observed — every star, planet, galaxy — is just 5% of what exists."},
+  {clue:`A <span class="ck">light-year</span> is the distance light travels in one year. The nearest star to our Sun, <span class="ck">Proxima Centauri</span>, is 4.24 light-years away. At the fastest speed ever achieved by a spacecraft (~250,000 km/h), how long would the journey take?`,con:null,choices:["100 years","2,000 years","18,000 years","180,000 years"],answer:"18,000 years",exp:"Even at 250,000 km/h — the speed of the Parker Solar Probe — reaching our nearest neighbor star would take about 18,000 years. This is why interstellar travel remains science fiction for now."},
+  {clue:`The <span class="ck">James Webb Space Telescope</span> can look back in time to see the universe's <span class="ck">first galaxies</span> forming. How soon after the Big Bang did the earliest galaxies appear?`,con:null,choices:["1 million years","100 million years","300–400 million years","1 billion years"],answer:"300–400 million years",exp:"JWST has detected galaxies from just 300-400 million years after the Big Bang — surprising scientists with how quickly galaxies formed. The universe was already making stars far earlier than models predicted."},
+  {clue:`The <span class="ck">event horizon</span> of a black hole is the point of no return. The black hole at the center of the Milky Way is called <span class="ck">Sagittarius A*</span>. How many times the mass of the Sun is it?`,con:null,choices:["400 thousand solar masses","4 million solar masses","4 billion solar masses","400 billion solar masses"],answer:"4 million solar masses",exp:"Sagittarius A* (pronounced 'A-star') was directly imaged in 2022 by the Event Horizon Telescope. Despite its enormous mass, it's relatively quiet compared to the supermassive black holes in other galaxies that are actively devouring material."},
+  {clue:`<span class="ck">Stephenson 2-18</span> is one of the largest known stars. If it replaced our Sun, its surface would extend past the orbit of Saturn. How many times larger than the Sun is it in diameter?`,con:null,choices:["100 times","500 times","2,150 times","10,000 times"],answer:"2,150 times",exp:"Stephenson 2-18 has a radius about 2,150 times the Sun's. Despite its enormous size, it's not the most massive star — size and mass are different things in stellar physics. The most massive known stars are only about 300 times the Sun's mass."},
+];
+
+const CONS={
+  orion:{name:"Orion — The Hunter",vb:"0 0 300 280",stars:[{x:150,y:20,r:5,name:"Betelgeuse",col:"#ff6633",lbl:true},{x:210,y:30,r:3,name:"Bellatrix",col:"#aaddff",lbl:true},{x:100,y:40,r:2.5,name:"",col:"#ccddff"},{x:155,y:95,r:2,name:"",col:"#ccddff"},{x:165,y:100,r:2,name:"",col:"#ccddff"},{x:175,y:98,r:2,name:"",col:"#ccddff"},{x:130,y:155,r:2.5,name:"",col:"#ccddff"},{x:175,y:158,r:2.5,name:"",col:"#ccddff"},{x:100,y:220,r:4,name:"Rigel",col:"#aaccff",lbl:true},{x:220,y:215,r:3,name:"Saiph",col:"#ccddff",lbl:false}],lines:[[0,1],[0,2],[1,3],[2,4],[3,4],[4,5],[3,6],[5,7],[6,8],[7,9],[8,9]],belts:[[6,3],[3,7]]},
+  bigdipper:{name:"Big Dipper — Ursa Major",vb:"0 0 340 220",stars:[{x:30,y:160,r:3,name:"Dubhe",col:"#ffddaa",lbl:true},{x:80,y:130,r:3,name:"Merak",col:"#ccddff",lbl:true},{x:150,y:150,r:3,name:"Phecda",col:"#ccddff",lbl:false},{x:190,y:130,r:3,name:"Megrez",col:"#ccddff",lbl:false},{x:240,y:80,r:3,name:"Alioth",col:"#ccddff",lbl:false},{x:280,y:50,r:3,name:"Mizar",col:"#ccddff",lbl:true},{x:310,y:20,r:3,name:"Alkaid",col:"#ccddff",lbl:false}],lines:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[0,3]]},
+  cassiopeia:{name:"Cassiopeia — The Queen",vb:"0 0 320 160",stars:[{x:20,y:120,r:3,name:"Caph",col:"#ffddaa",lbl:true},{x:85,y:60,r:3.5,name:"Schedar",col:"#ff9944",lbl:true},{x:155,y:100,r:3,name:"Cih",col:"#ccddff",lbl:false},{x:225,y:40,r:3,name:"Ruchbah",col:"#ccddff",lbl:false},{x:295,y:80,r:3,name:"Segin",col:"#ccddff",lbl:false}],lines:[[0,1],[1,2],[2,3],[3,4]]}
+};
+
+function drawCon(key){
+  const c=CONS[key];if(!c)return'';
+  const W=parseInt(c.vb.split(' ')[2]),H=parseInt(c.vb.split(' ')[3]);
+  let ln=c.lines.map(([a,b])=>{const s1=c.stars[a],s2=c.stars[b];return`<line x1="${s1.x}" y1="${s1.y}" x2="${s2.x}" y2="${s2.y}" stroke="rgba(150,180,255,0.4)" stroke-width="1.5" stroke-dasharray="4,3"/>`;}).join('');
+  if(c.belts)ln+=c.belts.map(([a,b])=>`<line x1="${c.stars[a].x}" y1="${c.stars[a].y}" x2="${c.stars[b].x}" y2="${c.stars[b].y}" stroke="rgba(255,215,0,0.5)" stroke-width="2"/>`).join('');
+  let sh=c.stars.map(s=>{const g=s.r>=4?`<circle cx="${s.x}" cy="${s.y}" r="${s.r+6}" fill="${s.col}" opacity="0.15"/>`:'';const d=`<circle cx="${s.x}" cy="${s.y}" r="${s.r}" fill="${s.col}" opacity="0.95"/>`;const l=s.lbl?`<text x="${s.x+s.r+4}" y="${s.y+4}" fill="${s.col}" font-size="9" font-family="sans-serif" opacity="0.9">${s.name}</text>`:'';return g+d+l;}).join('');
+  return`<svg viewBox="${c.vb}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:160px"><rect width="${W}" height="${H}" fill="transparent"/>${ln}${sh}<text x="${W/2}" y="${H-4}" text-anchor="middle" fill="rgba(255,215,0,0.5)" font-size="10" font-family="sans-serif">${c.name}</text></svg>`;
+}
+
+// Need callisto, vesta, sedna, atlas in OBJECTS
+OBJECTS.callisto={name:"Callisto",emoji:"🌑",hint:"Most cratered moon of Jupiter"};
+OBJECTS.vesta={name:"Vesta",emoji:"🪨",hint:"Second largest asteroid belt object"};
+OBJECTS.sedna={name:"Sedna",emoji:"🌡️",hint:"Distant scattered disc object"};
+OBJECTS.atlas={name:"Comet ATLAS",emoji:"☄️",hint:"Broke apart near Sun in 2020"};
+
+let G={score:0,streak:0,best:0,round:0,total:10,correct:0,wrong:0,ans:false,bans:false,timer:null,tl:20,mt:20,diff:'cadet',uq:[],ub:[],q:null,bq:null,showB:false};
+const RANKS=[{min:0,name:"Space Cadet",msg:"Keep training, the stars await!"},{min:200,name:"Rocket Pilot",msg:"Nice flying! You know your solar system."},{min:500,name:"Star Navigator",msg:"Impressive! The cosmos holds few secrets from you."},{min:900,name:"Planet Hunter",msg:"Outstanding! You're a true space explorer."},{min:1300,name:"Galaxy Commander",msg:"Elite level! The universe bows to your knowledge."},{min:1800,name:"Cosmic Legend",msg:"Extraordinary. You were born among the stars. 🌟"}];
+const DIFF={cadet:{t:25,c:3,sb:1},pilot:{t:18,c:4,sb:1.5},commander:{t:12,c:4,sb:2}};
+
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');if(id==='dossier-screen')showTab('planets');window.scrollTo(0,0)}
+function upScore(){document.getElementById('sc').textContent=G.score;document.getElementById('str').textContent=G.streak>0?G.streak+'🔥':'0';document.getElementById('rd').textContent=G.round+'/'+G.total;document.getElementById('rk').textContent=getRank().name}
+function getRank(){let r=RANKS[0];RANKS.forEach(x=>{if(G.score>=x.min)r=x});return r}
+function setDiff(d){G.diff=d;document.querySelectorAll('.db').forEach(b=>b.classList.remove('active'));document.getElementById('diff-'+d).classList.add('active')}
+
+function showTab(tab){
+  document.querySelectorAll('.dtab').forEach(t=>t.classList.remove('active'));
+  event.target.classList.add('active');
+  const data=DOSSIER[tab];
+  document.getElementById('dossier-grid').innerHTML=data.map(item=>
+    `<div class="dc"><div class="de">${item.emoji}</div><div class="dn">${item.name.toUpperCase()}</div><div class="df">${item.facts.map(f=>`• <span>${f}</span>`).join('<br>')}</div></div>`
+  ).join('');
+}
+
+function buildPreview(){
+  const items=[
+    {emoji:"🪨",name:"Mercury"},{emoji:"🌡️",name:"Venus"},{emoji:"🌍",name:"Earth"},{emoji:"🔴",name:"Mars"},
+    {emoji:"🪐",name:"Jupiter"},{emoji:"🪐",name:"Saturn"},{emoji:"🔵",name:"Uranus"},{emoji:"🌀",name:"Neptune"},
+    {emoji:"🤍",name:"Pluto"},{emoji:"🌋",name:"Io"},{emoji:"🧊",name:"Europa"},{emoji:"💨",name:"Titan"},
+    {emoji:"☄️",name:"Halley's"},{emoji:"🛸",name:"ʻOumuamua"},{emoji:"🌌",name:"Kuiper Belt"},{emoji:"❄️",name:"Eris"}
+  ];
+  document.getElementById('planet-preview').innerHTML=items.map(p=>`<div class="pm"><span class="pe">${p.emoji}</span>${p.name}</div>`).join('');
+}
+
+function startGame(){Object.assign(G,{score:0,streak:0,best:0,round:0,correct:0,wrong:0,uq:[],ub:[],showB:false});showScreen('game-screen');upScore();nextRound()}
+
+function pickQ(){let pool=QS.map((_,i)=>i).filter(i=>!G.uq.includes(i));if(!pool.length){G.uq=[];pool=QS.map((_,i)=>i)}const i=pool[Math.floor(Math.random()*pool.length)];G.uq.push(i);return QS[i]}
+function pickBQ(){let pool=BQ.map((_,i)=>i).filter(i=>!G.ub.includes(i));if(!pool.length){G.ub=[];pool=BQ.map((_,i)=>i)}const i=pool[Math.floor(Math.random()*pool.length)];G.ub.push(i);return BQ[i]}
+
+function nextRound(){
+  if(G.round>=G.total){endGame();return}
+  G.round++;G.ans=false;G.bans=false;G.showB=false;
+  document.getElementById('next-btn').style.display='none';
+  document.getElementById('fb').style.display='none';
+  document.getElementById('bonus-panel').style.display='none';
+  document.getElementById('bfb').style.display='none';
+  document.getElementById('bcw').style.display='none';
+  G.q=pickQ();
+  if(G.round%2===0){G.bq=pickBQ();G.showB=true}
+  document.getElementById('ml').textContent='MISSION '+G.round;
+  document.getElementById('rl').textContent='Round '+G.round+' of '+G.total;
+  document.getElementById('clue-text').innerHTML=G.q.clue;
+  const d=DIFF[G.diff];
+  let ch=[G.q.answer],dc=[...G.q.decoys];
+  while(ch.length<d.c&&dc.length){const i=Math.floor(Math.random()*dc.length);ch.push(dc.splice(i,1)[0])}
+  ch.sort(()=>Math.random()-.5);
+  document.getElementById('choices-grid').innerHTML=ch.map(k=>{const o=OBJECTS[k]||{name:k,emoji:'❓',hint:''};return`<div class="pc" id="card-${k}" onclick="pick('${k}')"><span class="pe2">${o.emoji}</span><div class="pn">${o.name.toUpperCase()}</div></div>`}).join('');
+  startTimer();upScore()
+}
+
+function startTimer(){
+  clearInterval(G.timer);
+  const d=DIFF[G.diff];G.tl=d.t;G.mt=d.t;
+  const tb=document.getElementById('tb');tb.style.width='100%';tb.classList.remove('w');
+  G.timer=setInterval(()=>{G.tl--;const p=(G.tl/G.mt)*100;tb.style.width=p+'%';if(p<30)tb.classList.add('w');if(G.tl<=0){clearInterval(G.timer);if(!G.ans)tout()}},1000)
+}
+
+function tout(){G.ans=true;G.streak=0;G.wrong++;const c=document.getElementById('card-'+G.q.answer);if(c)c.classList.add('correct');showFB(false,true);if(G.showB)setTimeout(showBonus,500);document.getElementById('next-btn').style.display='inline-block';upScore()}
+
+function pick(k){
+  if(G.ans)return;G.ans=true;clearInterval(G.timer);
+  const ok=k===G.q.answer;
+  document.getElementById('card-'+k).classList.add(ok?'correct':'wrong');
+  if(ok){
+    const d=DIFF[G.diff],sb=Math.round((G.tl/G.mt)*50*d.sb);
+    G.streak++;if(G.streak>G.best)G.best=G.streak;
+    const stk=G.streak>1?(G.streak-1)*25:0,earned=100+sb+stk;
+    G.score+=earned;G.correct++;showFB(true,false,earned,sb,stk)
+  }else{const c=document.getElementById('card-'+G.q.answer);if(c)c.classList.add('correct');G.streak=0;G.wrong++;showFB(false,false)}
+  if(G.showB)setTimeout(showBonus,500);
+  document.getElementById('next-btn').style.display='inline-block';upScore()
+}
+
+function showFB(ok,to,earned,sb,stk){
+  const b=document.getElementById('fb');b.style.display='block';b.className=ok?'cf':'wf';
+  const o=OBJECTS[G.q.answer]||{name:G.q.answer};
+  if(to)b.innerHTML=`<div class="ft">⏰ TIME'S UP!</div><p>The answer was <strong>${o.name}</strong>. ${G.q.exp}</p>`;
+  else if(ok)b.innerHTML=`<div class="ft" style="color:var(--success)">✅ CORRECT! +${earned} pts</div><p>${G.q.exp}</p><div style="margin-top:8px"><span class="ftag">+100 base</span><span class="ftag">+${sb} speed</span>${stk>0?`<span class="ftag">+${stk} streak 🔥</span>`:''}</div>`;
+  else b.innerHTML=`<div class="ft" style="color:var(--danger)">❌ NOT QUITE</div><p>The answer was <strong>${o.name}</strong>. ${G.q.exp}</p>`
+}
+
+function showBonus(){
+  if(!G.bq)return;const b=G.bq,panel=document.getElementById('bonus-panel');panel.style.display='block';
+  const cw=document.getElementById('bcw');
+  if(b.con&&CONS[b.con]){cw.style.display='block';cw.innerHTML=drawCon(b.con)}else{cw.style.display='none'}
+  document.getElementById('bct').innerHTML=b.clue;document.getElementById('bfb').style.display='none';
+  const sh=[...b.choices].sort(()=>Math.random()-.5);
+  document.getElementById('bonus-choices').innerHTML=sh.map(ch=>`<div class="bcard" onclick="pickB('${ch.replace(/'/g,"\\'").replace(/"/g,'&quot;')}')">${ch}</div>`).join('');
+  panel.scrollIntoView({behavior:'smooth',block:'nearest'})
+}
+
+function pickB(ch){
+  if(G.bans)return;G.bans=true;const b=G.bq,ok=ch===b.answer;
+  document.querySelectorAll('.bcard').forEach(card=>{card.style.pointerEvents='none';const t=card.textContent.trim();if(t===ch)card.classList.add(ok?'correct':'wrong');if(!ok&&t===b.answer)card.classList.add('correct')});
+  const fb=document.getElementById('bfb');fb.style.display='block';
+  if(ok){G.score+=150;fb.className='cf';fb.innerHTML=`<strong>✅ +150 BONUS POINTS!</strong> ${b.exp}`}
+  else{fb.className='wf';fb.innerHTML=`<strong>❌ Not quite — the answer was: ${b.answer}.</strong> ${b.exp}`}
+  upScore()
+}
+
+function endGame(){
+  showScreen('end-screen');const r=getRank();
+  document.getElementById('fsd').textContent=G.score;
+  document.getElementById('erd').textContent='🏆 '+r.name;
+  document.getElementById('erd').style.color=G.score>=500?'var(--gold)':'var(--glow)';
+  document.getElementById('em').textContent=r.msg;
+  document.getElementById('ecn').textContent=G.correct;
+  document.getElementById('ewn').textContent=G.wrong;
+  document.getElementById('ebsn').textContent=G.best
+}
+
+buildPreview();upScore();
+</script>
+</body>
+</html>
